@@ -10,6 +10,10 @@ import (
 	"github.com/kardianos/service"
 )
 
+func banner() {
+	fmt.Println("netclip v" + netclip.AppVersion)
+}
+
 var logger service.Logger
 
 type program struct {
@@ -40,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		netclip.Banner()
+		banner()
 		os.Exit(0)
 	}
 

@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+func banner() {
+	fmt.Println("netclip v" + netclip.AppVersion)
+}
+
 func main() {
 
 	var port string
@@ -16,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		netclip.Banner()
+		banner()
 		os.Exit(0)
 	}
 	fmt.Printf("Starting the web server on port %s\n", port)

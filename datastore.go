@@ -1,6 +1,9 @@
 package netclip
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 // DataStore holds our text data
 type DataStore struct {
@@ -16,15 +19,25 @@ func (ds *DataStore) Store(key, value string) {
 }
 
 // Range lets us loop over all the records.
-func (ds *DataStore) Range(f func(key, value string) bool) {
+func (ds *DataStore) Range() map[string]string {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
-	for key, value := range ds.data {
-		if !f(key, value) {
-			break
-		}
+	keys := make([]string, 0, len(ds.data))
+	for key := range ds.data {
+		keys = append(keys, key)
 	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+
+	sortedData := make(map[string]string, len(ds.data))
+	for _, key := range keys {
+		sortedData[key] = ds.data[key]
+	}
+
+	return sortedData
 }
 
 // Delete removes a record
@@ -32,4 +45,13 @@ func (ds *DataStore) Delete(key string) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 	delete(ds.data, key)
+}
+
+// GetValue gets the value at the key
+func (ds *DataStore) GetValue(key string) (string, bool) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	value, ok := ds.data[key]
+	return value, ok
 }

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <title>netclip</title>
+    <meta name=viewport content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <div class="container">
+      <main>
+        <h1>netclip</h1>
+        <form method="post" action="save">
+            <textarea required name="text"></textarea><br>
+            <input type="submit" value="Save">
+        </form>
+        <div class="items">
+          <h1>Saved clips</h1>
+          {{range $key, $value := .DataStore.Range}}
+          <div class="item">
+            <div class="snippet"><pre>{{$value}}</pre></div>
+            <form method="post" action="/delete">
+              <input type="hidden" value="{{$key}}" name="key">
+              <input type="submit" value="Delete this clip">
+            </form>
+          </div>
+          {{end}}
+      </div>
+    </main>
+    <footer><small>netclip v{{$.AppVersion}} &copy; {{ $.Year }} Brian Hogan</small></footer>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

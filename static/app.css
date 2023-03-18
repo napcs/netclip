@@ -1,0 +1,57 @@
+* ,*:before, *:after {
+  box-sizing:border-box;
+}
+
+body {
+  font-family: geneva, verdana, 'lucida sans', 'lucida grande', 'lucida sans unicode',sans-serif;
+  color:#345;
+}
+
+.container {
+  width: 80%;
+  margin: 0 auto;
+}
+
+main form {
+
+  display: flex;
+  flex-direction:column;
+}
+
+main form textarea {
+  height: 6rem;
+}
+.item {
+  border: 1px solid #ddd;
+  padding: 1em;
+
+}
+.snippet pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.snippet {
+  position: relative;
+}
+
+@media screen and (min-width: 760px) {
+
+  .snippet .btn-copy {
+    top: 0;
+    right: 0;
+    position: absolute;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+
+  .container {
+    width: 60%;
+  }
+
+}
