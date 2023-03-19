@@ -18,15 +18,28 @@ var dataStore = DataStore{
 var staticFiles embed.FS
 
 // AppVersion holds the application version
-var AppVersion = "0.0.4"
+var AppVersion = "0.0.5"
 
 // Run starts the server using the given port (string)
-func Run(port string) {
+func Run(port string, certFile string, keyFile string) {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/save", saveHandler)
 	http.HandleFunc("/delete", deleteHandler)
 	http.HandleFunc("/static/", staticFileHandler)
-	_ = http.ListenAndServe(":"+port, nil)
+
+	if certFile == "" && keyFile == "" {
+		log.Println("starting http")
+		err := http.ListenAndServe(":"+port, nil)
+		if err != nil {
+			log.Fatal("Could not start server: ", err)
+		}
+	} else {
+		log.Println("starting https")
+		err := http.ListenAndServeTLS(":"+port, certFile, keyFile, nil)
+		if err != nil {
+			log.Fatal("Could not start server: ", err)
+		}
+	}
 }
 
 // Index page shows the subscription form.
@@ -59,6 +72,7 @@ func indexHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// serve static pages
 func staticFileHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := r.URL.Path[1:]
 	data, err := staticFiles.ReadFile(filePath)
@@ -83,6 +97,7 @@ func staticFileHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
+// save records
 func saveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
@@ -108,6 +123,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// delete records
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
