@@ -139,21 +139,21 @@ tailscale:
 - Flags now consistently override config file options.
 - Improved internals to allow for better testing.
 
-### 0.0.5 - 2023-03-18
+### 0.5.0 - 2023-03-18
 
 - single binary with https support
 
-### 0.0.4 2023-03-17
+### 0.4.0 2023-03-17
 
 - refactor binaries to use templates and css
 
-### 0.0.3 2023-03-17
+### 0.3.0 2023-03-17
 - initial public test
 
-### 0.0.2 2023-03-17
+### 0.2.0 2023-03-17
 - service support
 
-### 0.0.1 2023-03-17
+### 0.1.0 2023-03-17
 - it's alive!
 
 ## License
