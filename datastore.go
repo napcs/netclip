@@ -11,6 +11,13 @@ type DataStore struct {
 	mu   sync.Mutex
 }
 
+// NewDataStore initializes a new data store
+func NewDataStore() DataStore {
+	return DataStore{
+		data: make(map[string]string),
+	}
+}
+
 // Store saves a field to the datastore
 func (ds *DataStore) Store(key, value string) {
 	ds.mu.Lock()

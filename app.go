@@ -10,9 +10,7 @@ import (
 	"time"
 )
 
-var dataStore = DataStore{
-	data: make(map[string]string),
-}
+var dataStore = NewDataStore()
 
 //go:embed static
 var staticFiles embed.FS
@@ -22,10 +20,10 @@ var AppVersion = "0.0.5"
 
 // Run starts the server using the given port (string)
 func Run(port string, certFile string, keyFile string) {
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/save", saveHandler)
-	http.HandleFunc("/delete", deleteHandler)
-	http.HandleFunc("/static/", staticFileHandler)
+	http.HandleFunc("/", IndexHandler)
+	http.HandleFunc("/save", SaveHandler)
+	http.HandleFunc("/delete", DeleteHandler)
+	http.HandleFunc("/static/", StaticFileHandler)
 
 	if certFile == "" && keyFile == "" {
 		log.Println("starting http")
@@ -42,8 +40,8 @@ func Run(port string, certFile string, keyFile string) {
 	}
 }
 
-// Index page shows the subscription form.
-func indexHandler(w http.ResponseWriter, _ *http.Request) {
+// IndexHandler shows the page that displays the form and the results
+func IndexHandler(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 
@@ -72,8 +70,8 @@ func indexHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// serve static pages
-func staticFileHandler(w http.ResponseWriter, r *http.Request) {
+// StaticFileHandler serves static files from the embedded file system
+func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := r.URL.Path[1:]
 	data, err := staticFiles.ReadFile(filePath)
 	if err != nil {
@@ -97,8 +95,8 @@ func staticFileHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-// save records
-func saveHandler(w http.ResponseWriter, r *http.Request) {
+// SaveHandler saves records to the DataStore
+func SaveHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	err := r.ParseForm()
@@ -123,8 +121,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// delete records
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteHandler deletes records from the DataStore
+func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	err := r.ParseForm()
