@@ -4,7 +4,7 @@ Self-contained pastebin for local networks, with no dependencies. Runs as a serv
 
 ### Why
 
-I need to copy text between computers, and using a public pastebin isn't always an option. I need multiple computers 
+I need to copy text between computers, and using a public pastebin isn't always an option. I need multiple computers
 to be able to paste things and see things pasted.
 
 And once this is running it's quicker than transferring files.
@@ -19,7 +19,7 @@ Download the binary for your OS.
 netclip
 ```
 
-This runs the server on 0.0.0.0 port `9999`. Override the port with `-p 4000`.
+This runs the server on 0.0.0.0 port `9999`. Override the port with `-port 4000`.
 
 ### Run as a service
 
@@ -30,19 +30,19 @@ netclip -service install
 netclip -service start
 ```
 
-Stop the service  with
+Stop the service with
 
 ```
 netclip -service stop
 ```
 
-Uninstall  the service  with
+Uninstall  the service with
 
 ```
 netclip -service uninstall
 ```
 
-This works on Windows 7 and above, and Windows Server 2008 and up. 
+This works on Windows 7 and above, and Windows Server 2008 and up.
 
 ## SSL support
 
@@ -57,9 +57,8 @@ openssl genrsa -out netclip.key 2048
 openssl req -new -x509 -sha256 -key netclip.key -out netclip.crt -days 365
 ```
 
-
-The first command generates a 2048-bit RSA private key and saves it to a file named netclip.key. 
-The second command creates a new self-signed X.509 certificate called `netclip.crt` using the generated private key 
+The first command generates a 2048-bit RSA private key and saves it to a file named netclip.key.
+The second command creates a new self-signed X.509 certificate called `netclip.crt` using the generated private key
 that's valid for 365 days.
 
 Then create the file `netclip.yml` and give it the paths to those keys:
@@ -69,6 +68,12 @@ Then create the file `netclip.yml` and give it the paths to those keys:
 port: "4000"
 cert_file: "netclip.crt"
 key_file: "netclip.key"
+```
+
+You can also set these with flags, which override config file settings:
+
+```
+netclip -port 8080 -cert server.crt -key server.key
 ```
 
 These certs aren't signed by an authority so your browser will prevent you from using the site unless you allow it, which is only temporary.
@@ -97,19 +102,59 @@ Windows (for Chrome and Edge):
 * Import the exported certificate file and complete the wizard.
 * Restart your browser for the changes to take effect.
 
+## Tailscale support
 
-## History
+You can run netclip on your Tailscale network instead of a regular network. This way you can access it from any device on your tailnet without exposing ports or dealing with firewalls.
 
-2023-03-18
+You should get an auth key and tag for this service. Once you have it, set the `TS_AUTHKEY` environment variable.
 
-0.0.5 - single binary with https support
+```
+export TS_AUTHKEY="tskey-auth-xxxxx"
+netclip -tailscale -tailscale-hostname my-netclip
+```
 
-2023-03-17
+If you don't have a Tailscale auth key set up, it'll walk you through logging in.
 
-0.0.4 - refactor binaries to use templates and css
-0.0.3 - initial public test
-0.0.2 - service support
-0.0.1 - it's alive!
+```
+netclip -tailscale -tailscale-hostname my-netclip
+```
+
+Netclip will be available at `https://my-netclip.your-tailnet.ts.net` to all devices on your tailnet. Add `-tailscale-tls` to use HTTPS with automatic Tailscale certificates.
+
+You can configure Tailscale support in the config file as well, but your auth key needs to come from the environment.
+
+```yaml
+tailscale:
+  enabled: true
+  hostname: "my-netclip"
+  use_tls: true
+```
+
+## Changelog
+
+### 0.1.0 - 2025-06-22
+
+- Exposed cert and key as config options
+- Use netclip on your Tailscale network with the `-tailscale` flag.
+- Flags now consistently override config file options.
+- Improved internals to allow for better testing.
+
+### 0.0.5 - 2023-03-18
+
+- single binary with https support
+
+### 0.0.4 2023-03-17
+
+- refactor binaries to use templates and css
+
+### 0.0.3 2023-03-17
+- initial public test
+
+### 0.0.2 2023-03-17
+- service support
+
+### 0.0.1 2023-03-17
+- it's alive!
 
 ## License
 

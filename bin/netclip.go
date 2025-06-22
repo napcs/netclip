@@ -18,9 +18,13 @@ func banner() {
 var logger service.Logger
 
 type program struct {
-	Port     string
-	CertFile string
-	KeyFile  string
+	Port          string
+	CertFile      string
+	KeyFile       string
+	TailscaleEnabled  bool
+	TailscaleHostname string
+	TailscaleAuthKey  string
+	TailscaleUseTLS   bool
 }
 
 func (p *program) Start(s service.Service) error {
@@ -30,7 +34,21 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	netclip.Run(p.Port, p.CertFile, p.KeyFile)
+	if p.TailscaleEnabled {
+		server := &netclip.TSNetServer{
+			Hostname: p.TailscaleHostname,
+			AuthKey:  p.TailscaleAuthKey,
+			UseTLS:   p.TailscaleUseTLS,
+		}
+		netclip.Run(server)
+	} else {
+		server := &netclip.HTTPServer{
+			Port:     p.Port,
+			CertFile: p.CertFile,
+			KeyFile:  p.KeyFile,
+		}
+		netclip.Run(server)
+	}
 }
 
 func (p *program) Stop(s service.Service) error {
@@ -40,10 +58,18 @@ func (p *program) Stop(s service.Service) error {
 
 func main() {
 	var serviceMode string
-	var port string
+
 	version := flag.Bool("v", false, "Prints current app version.")
 	flag.StringVar(&serviceMode, "service", "", "install/restart/start/stop/uninstall")
-	flag.StringVar(&port, "port", "9999", "Port to use")
+
+	// Define flags with pointers to detect if they were set
+	portFlag := flag.String("port", "", "Port to use (default: 9999)")
+	certFlag := flag.String("cert", "", "Path to SSL certificate file")
+	keyFlag := flag.String("key", "", "Path to SSL private key file")
+	tailscaleFlag := flag.Bool("tailscale", false, "Enable Tailscale networking")
+	tailscaleHostnameFlag := flag.String("tailscale-hostname", "", "Tailscale hostname (default: netclip)")
+	tailscaleTLSFlag := flag.Bool("tailscale-tls", false, "Use HTTPS with Tailscale certificates")
+
 	flag.Parse()
 
 	if *version {
@@ -76,9 +102,8 @@ func main() {
 		}
 	}
 
-	if config.Port == "" {
-		config.Port = port
-	}
+	// Apply flag overrides - flags take precedence over config file
+	config = netclip.ApplyFlags(config, *portFlag, *certFlag, *keyFlag, *tailscaleHostnameFlag, *tailscaleFlag, *tailscaleTLSFlag)
 
 	// a mode was passed. Someone wants to do service things.
 
@@ -88,7 +113,15 @@ func main() {
 		Description: "Tiny server for a text clipboard for your network",
 	}
 
-	prg := &program{Port: config.Port, CertFile: config.CertFile, KeyFile: config.KeyFile}
+	prg := &program{
+		Port:          config.Port,
+		CertFile:      config.CertFile,
+		KeyFile:       config.KeyFile,
+		TailscaleEnabled:  config.Tailscale.Enabled,
+		TailscaleHostname: config.Tailscale.Hostname,
+		TailscaleAuthKey:  os.Getenv("TS_AUTHKEY"),
+		TailscaleUseTLS:   config.Tailscale.UseTLS,
+	}
 
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
@@ -137,7 +170,11 @@ func main() {
 
 	default:
 		// just run as a standalone server
-		fmt.Printf("Starting netclip on port %s\n", config.Port)
+		if config.Tailscale.Enabled {
+			fmt.Printf("Starting netclip on Tailscale as %s.ts.net\n", config.Tailscale.Hostname)
+		} else {
+			fmt.Printf("Starting netclip on port %s\n", config.Port)
+		}
 		if err = s.Run(); err != nil {
 			log.Fatal(err)
 		}

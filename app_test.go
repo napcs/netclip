@@ -136,3 +136,65 @@ func TestDeleteHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.NotContains(t, rr.Body.String(), key)
 }
+
+func TestCreateHTTPServer(t *testing.T) {
+	config := netclip.Config{
+		Port:     "8080",
+		CertFile: "cert.pem",
+		KeyFile:  "key.pem",
+		Tailscale: netclip.TailscaleConfig{
+			Enabled: false,
+		},
+	}
+
+	server := netclip.CreateServer(config, "")
+	
+	// Should create HTTPServer
+	httpServer, ok := server.(*netclip.HTTPServer)
+	assert.True(t, ok, "Expected HTTPServer type")
+	assert.NotNil(t, httpServer)
+}
+
+func TestCreateTSNetServer(t *testing.T) {
+	config := netclip.Config{
+		Port: "9999",
+		Tailscale: netclip.TailscaleConfig{
+			Enabled:  true,
+			Hostname: "test-netclip",
+			UseTLS:   true,
+		},
+	}
+
+	server := netclip.CreateServer(config, "test-auth-key")
+	
+	// Should create TSNetServer
+	tsnetServer, ok := server.(*netclip.TSNetServer)
+	assert.True(t, ok, "Expected TSNetServer type")
+	assert.NotNil(t, tsnetServer)
+}
+
+func TestCreateServerWithDefaultConfig(t *testing.T) {
+	config := netclip.Config{} // Empty config, TSNet disabled by default
+	
+	server := netclip.CreateServer(config, "")
+	
+	// Should create HTTPServer (default)
+	_, ok := server.(*netclip.HTTPServer)
+	assert.True(t, ok, "Expected HTTPServer type for default config")
+}
+
+func TestCreateTSNetServerWithoutAuthKey(t *testing.T) {
+	config := netclip.Config{
+		Tailscale: netclip.TailscaleConfig{
+			Enabled:  true,
+			Hostname: "test-netclip",
+		},
+	}
+
+	server := netclip.CreateServer(config, "") // Empty auth key
+	
+	// Should still create TSNetServer (will use manual auth)
+	tsnetServer, ok := server.(*netclip.TSNetServer)
+	assert.True(t, ok, "Expected TSNetServer type even without auth key")
+	assert.NotNil(t, tsnetServer)
+}
