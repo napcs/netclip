@@ -6,6 +6,7 @@ import (
 	"log"
 	"netclip"
 	"os"
+	"runtime"
 
 	"github.com/kardianos/service"
 )
@@ -69,6 +70,7 @@ func main() {
 	tailscaleFlag := flag.Bool("tailscale", false, "Enable Tailscale networking")
 	tailscaleHostnameFlag := flag.String("tailscale-hostname", "", "Tailscale hostname (default: netclip)")
 	tailscaleTLSFlag := flag.Bool("tailscale-tls", false, "Use HTTPS with Tailscale certificates")
+	serviceUserFlag := flag.String("service-user", "", "User to run service as (required for install on Linux/macOS)")
 
 	flag.Parse()
 
@@ -95,6 +97,10 @@ func main() {
 		Name:        "netclip",
 		DisplayName: "netclip Clipboard Server",
 		Description: "Tiny server for a text clipboard for your network",
+	}
+	
+	if *serviceUserFlag != "" {
+		svcConfig.UserName = *serviceUserFlag
 	}
 
 	prg := &program{
@@ -141,6 +147,10 @@ func main() {
 		}
 
 	case "install":
+		// Require service-user flag on non-Windows platforms
+		if runtime.GOOS != "windows" && *serviceUserFlag == "" {
+			log.Fatal("service-user flag is required for service installation on Linux/macOS")
+		}
 		if err = s.Install(); err != nil {
 			log.Fatal(err)
 		}

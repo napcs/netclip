@@ -39,6 +39,8 @@ You can use the following command-line options, which you can see with `--help`:
         Path to SSL private key file
   -service string
         install/restart/start/stop/uninstall
+  -service-user string
+        User to run service as (required to install service on Linux/macOS)
   -tailscale
         Enable Tailscale networking
   -tailscale-hostname string
@@ -217,6 +219,7 @@ tailscale:
 ### 0.6.1 - 2025-06-24
 
 - Configuration file lookup which makes it easier to run as a service.
+- new `-service-user`, required when installing as a service, to specify the user account for the service.
 
 ### 0.6.0 - 2025-06-22
 
