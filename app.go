@@ -20,7 +20,7 @@ var dataStore = NewDataStore()
 var staticFiles embed.FS
 
 // AppVersion holds the application version
-var AppVersion = "0.6.0"
+var AppVersion = "0.6.1"
 
 // Server interface for different server types
 type Server interface {

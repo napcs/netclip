@@ -6,7 +6,6 @@ import (
 	"log"
 	"netclip"
 	"os"
-	"path/filepath"
 
 	"github.com/kardianos/service"
 )
@@ -56,6 +55,7 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
+
 func main() {
 	var serviceMode string
 
@@ -77,29 +77,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	// get path to current executable to load the config file
-	exePath, err := os.Executable()
+	// Try loading config from multiple standard locations
+	config, err := netclip.LoadConfigFromPaths()
+	
 	if err != nil {
-		log.Fatalf("Failed to get executable path: %v", err)
-	}
-
-	exeDir := filepath.Dir(exePath)
-
-	configPath := filepath.Join(exeDir, "netclip.yml")
-	config, err := netclip.LoadConfig(configPath)
-
-	if err != nil {
-		// Try loading config.yaml from the current working directory
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Failed to get current working directory: %v", err)
-		}
-		configPath = filepath.Join(cwd, "netclip.yml")
-		config, err = netclip.LoadConfig(configPath)
-		if err != nil {
-			log.Printf("Failed to load config: %v", err)
-			log.Printf("Using default options.")
-		}
+		log.Printf("Failed to load config from any location: %v", err)
+		log.Printf("Searched paths: %v", netclip.GetConfigPaths())
+		log.Printf("Using default options.")
 	}
 
 	// Apply flag overrides - flags take precedence over config file

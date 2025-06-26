@@ -2,6 +2,9 @@ package netclip_test
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"netclip"
@@ -167,5 +170,71 @@ func TestApplyFlagsConfigPreservedWhenNoFlags(t *testing.T) {
 	assert.True(t, result.Tailscale.Enabled)
 	assert.Equal(t, "test-host", result.Tailscale.Hostname)
 	assert.True(t, result.Tailscale.UseTLS)
+}
+
+// GetConfigPaths tests
+func TestGetConfigPaths(t *testing.T) {
+	paths := netclip.GetConfigPaths()
+	
+	// Should have multiple paths
+	assert.Greater(t, len(paths), 2)
+	
+	// All paths should end with netclip.yml
+	for _, path := range paths {
+		assert.True(t, strings.HasSuffix(path, "netclip.yml"))
+	}
+	
+	// Should include current working directory
+	cwd, _ := os.Getwd()
+	expectedCwdPath := filepath.Join(cwd, "netclip.yml")
+	assert.Contains(t, paths, expectedCwdPath)
+	
+	// Should include home directory paths
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		expectedHomePath := filepath.Join(homeDir, ".netclip.yml")
+		assert.Contains(t, paths, expectedHomePath)
+	}
+	
+	// Platform-specific path checks
+	switch runtime.GOOS {
+	case "linux":
+		assert.Contains(t, paths, "/etc/netclip/netclip.yml")
+		assert.Contains(t, paths, "/usr/local/etc/netclip/netclip.yml")
+		assert.Contains(t, paths, "/opt/netclip/netclip.yml")
+	case "darwin":
+		assert.Contains(t, paths, "/etc/netclip/netclip.yml")
+		assert.Contains(t, paths, "/usr/local/etc/netclip/netclip.yml")
+		assert.Contains(t, paths, "/Library/Application Support/netclip/netclip.yml")
+	case "windows":
+		// Check for environment variable paths
+		if programData := os.Getenv("PROGRAMDATA"); programData != "" {
+			expectedPath := filepath.Join(programData, "netclip", "netclip.yml")
+			assert.Contains(t, paths, expectedPath)
+		}
+	}
+}
+
+func TestGetConfigPathsXDGConfigHome(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("XDG_CONFIG_HOME not applicable on Windows")
+	}
+	
+	// Save original value
+	originalXDG := os.Getenv("XDG_CONFIG_HOME")
+	defer func() {
+		if originalXDG == "" {
+			os.Unsetenv("XDG_CONFIG_HOME")
+		} else {
+			os.Setenv("XDG_CONFIG_HOME", originalXDG)
+		}
+	}()
+	
+	// Test with custom XDG_CONFIG_HOME
+	testConfigDir := "/tmp/test-xdg"
+	os.Setenv("XDG_CONFIG_HOME", testConfigDir)
+	
+	paths := netclip.GetConfigPaths()
+	expectedPath := filepath.Join(testConfigDir, "netclip", "netclip.yml")
+	assert.Contains(t, paths, expectedPath)
 }
 

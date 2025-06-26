@@ -1,13 +1,18 @@
 # Netclip
 
-Self-contained pastebin for local networks, with no dependencies. Runs as a service on Windows too.
+Self-contained pastebin for local networks, with no dependencies. Runs as a service on Windows, macOS, and Linux. Can also run privately on a Tailscale network (tailnet).
 
 ### Why
 
 I need to copy text between computers, and using a public pastebin isn't always an option. I need multiple computers
 to be able to paste things and see things pasted.
 
-And once this is running it's quicker than transferring files.
+### Limitations
+
+- It's not multi-user. So don't paste things you don't want others to see.
+- You're responsible for your own security, firewalling, etc.
+- There is no permanent persistence. Restarting the service clears the database.
+
 
 ## Install
 
@@ -15,11 +20,53 @@ Download the binary for your OS.
 
 ### Run
 
+You can run the program with defaults with
+
 ```
 netclip
 ```
 
-This runs the server on 0.0.0.0 port `9999`. Override the port with `-port 4000`.
+This runs the server on `0.0.0.0` port `9999`. Override the port with `-port 4000`.
+
+You can use the following command-line options, which you can see with `--help`:
+
+```
+  -port string
+        Port to use (default: 9999)
+  -cert string
+        Path to SSL certificate file
+  -key string
+        Path to SSL private key file
+  -service string
+        install/restart/start/stop/uninstall
+  -tailscale
+        Enable Tailscale networking
+  -tailscale-hostname string
+        Tailscale hostname (default: netclip)
+  -tailscale-tls
+        Use HTTPS with Tailscale certificates
+  -v    Prints current app version.
+```
+
+You can also specify options in a `netclip.yml` file:
+
+```yaml
+port: "4000"
+cert_file: "netclip.crt"
+key_file: "netclip.key"
+```
+
+The application searches for `netclip.yml` in the following locations (in priority order):
+
+1. **Executable directory** - Same directory as the netclip binary.
+2. **Current working directory** - Where you ran the command from.
+3. **User home directory** - `~/.netclip.yml` or `~/netclip.yml`
+4. **User config directory** - `~/.config/netclip/netclip.yml` or `$XDG_CONFIG_HOME/netclip/netclip.yml`
+5. **System-wide locations**:
+   - **Linux**: `/etc/netclip/netclip.yml`, `/usr/local/etc/netclip/netclip.yml`, `/opt/netclip/netclip.yml`
+   - **macOS**: `/etc/netclip/netclip.yml`, `/usr/local/etc/netclip/netclip.yml`, `/opt/netclip/netclip.yml`, `/Library/Application Support/netclip/netclip.yml`
+   - **Windows**: `%PROGRAMDATA%\netclip\netclip.yml`, `%PROGRAMFILES%\netclip\netclip.yml`
+
 
 ### Run as a service
 
@@ -43,6 +90,40 @@ netclip -service uninstall
 ```
 
 This works on Windows 7 and above, and Windows Server 2008 and up.
+
+#### Service Configuration Requirements
+
+**IMPORTANT**: When running as a system service, you need to use a configuration file because the service doesn't accept command line arguments.
+Place the config file in one of these locations:
+
+**Linux (systemd service)**
+- `/etc/netclip/netclip.yml` (recommended)
+- `/usr/local/etc/netclip/netclip.yml`
+
+```bash
+sudo mkdir -p /etc/netclip
+sudo cp netclip.yml /etc/netclip/
+```
+
+**macOS (launchd service)**
+- `/usr/local/etc/netclip/netclip.yml` (recommended)
+- `/Library/Application Support/netclip/netclip.yml`
+
+```bash
+sudo mkdir -p /usr/local/etc/netclip
+sudo cp netclip.yml /usr/local/etc/netclip/
+```
+
+**Windows Service**
+- `C:\ProgramData\netclip\netclip.yml` (recommended)
+- `C:\Program Files\netclip\netclip.yml`
+
+PowerShell as Administrator:
+
+```powershell
+New-Item -ItemType Directory -Path "C:\ProgramData\netclip" -Force
+Copy-Item "netclip.yml" "C:\ProgramData\netclip\"
+```
 
 ## SSL support
 
@@ -75,6 +156,7 @@ You can also set these with flags, which override config file settings:
 ```
 netclip -port 8080 -cert server.crt -key server.key
 ```
+
 
 These certs aren't signed by an authority so your browser will prevent you from using the site unless you allow it, which is only temporary.
 
@@ -132,7 +214,11 @@ tailscale:
 
 ## Changelog
 
-### 0.1.0 - 2025-06-22
+### 0.6.1 - 2025-06-24
+
+- Configuration file lookup which makes it easier to run as a service.
+
+### 0.6.0 - 2025-06-22
 
 - Exposed cert and key as config options
 - Use netclip on your Tailscale network with the `-tailscale` flag.
